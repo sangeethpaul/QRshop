@@ -244,7 +244,7 @@ export default function Home() {
             return (
               <div key={qr.id} className="glass p-6 rounded-3xl flex flex-col items-center text-center group hover:border-primary/50 transition-all duration-300">
                 <div className="mb-6 p-4 bg-white rounded-2xl shadow-xl shadow-black/20">
-                  <QRCodeDisplay url={redirectUrl} size={160} />
+                  <QRCodeDisplay url={redirectUrl} size={240} />
                 </div>
                 
                 <div className="mb-6 w-full px-2">
