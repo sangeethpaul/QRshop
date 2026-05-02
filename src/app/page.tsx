@@ -213,12 +213,12 @@ export default function Home() {
                 <div className="mt-auto w-full space-y-3">
                   {!qr.isLifetime && (
                     <div className="flex flex-col gap-2">
-                      <CheckoutButton qrCodeId={qr.id} tier="BASIC" onSuccess={fetchQRCodes} />
-                      <CheckoutButton qrCodeId={qr.id} tier="DYNAMIC" onSuccess={fetchQRCodes} />
+                      <CheckoutButton qrCodeId={qr.id} tier="BASIC" onSuccess={fetchQRCodes} userEmail={session.user?.email || ""} userName={session.user?.name || ""} />
+                      <CheckoutButton qrCodeId={qr.id} tier="DYNAMIC" onSuccess={fetchQRCodes} userEmail={session.user?.email || ""} userName={session.user?.name || ""} />
                     </div>
                   )}
                   {qr.isLifetime && !qr.isDynamic && (
-                    <CheckoutButton qrCodeId={qr.id} tier="DYNAMIC" onSuccess={fetchQRCodes} />
+                    <CheckoutButton qrCodeId={qr.id} tier="DYNAMIC" onSuccess={fetchQRCodes} userEmail={session.user?.email || ""} userName={session.user?.name || ""} />
                   )}
                   {qr.isDynamic && editingId !== qr.id && (
                     <button
