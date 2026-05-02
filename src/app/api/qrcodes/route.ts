@@ -3,23 +3,20 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
 
+function getUserId(session: any): string | null {
+  return (session?.user as any)?.id || null;
+}
+
 export async function GET() {
   const session = await getServerSession(authOptions);
+  const userId = getUserId(session);
 
-  if (!session?.user?.email) {
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-  });
-
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
-
   const qrcodes = await prisma.qRCode.findMany({
-    where: { userId: user.id },
+    where: { userId },
     orderBy: { createdAt: "desc" },
   });
 
@@ -28,17 +25,10 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
+  const userId = getUserId(session);
 
-  if (!session?.user?.email) {
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-  });
-
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
   let { destinationUrl } = await req.json();
@@ -55,13 +45,13 @@ export async function POST(req: Request) {
     destinationUrl = `http://${destinationUrl}`;
   }
 
-  // Check how many free QR codes the user has
-  if (user.email !== "sangeeth.paul@gmail.com") {
+  // Check free QR code limit (max 3 per user, admins exempt)
+  const adminEmails = ["sangeeth.paul@gmail.com"];
+  const userEmail = session?.user?.email || "";
+
+  if (!adminEmails.includes(userEmail)) {
     const freeQrCodeCount = await prisma.qRCode.count({
-      where: {
-        userId: user.id,
-        isLifetime: false,
-      },
+      where: { userId, isLifetime: false },
     });
 
     if (freeQrCodeCount >= 3) {
@@ -75,7 +65,8 @@ export async function POST(req: Request) {
   const qrcode = await prisma.qRCode.create({
     data: {
       destinationUrl,
-      userId: user.id,
+      userId,
+      userEmail: session?.user?.email || "",
     },
   });
 

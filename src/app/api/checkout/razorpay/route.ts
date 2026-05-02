@@ -11,17 +11,10 @@ const razorpay = new Razorpay({
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
+  const userId = (session?.user as any)?.id;
 
-  if (!session?.user?.email) {
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-  });
-
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
   const { qrCodeId, tier } = await req.json();
@@ -35,7 +28,7 @@ export async function POST(req: Request) {
     where: { id: qrCodeId },
   });
 
-  if (!qrcode || qrcode.userId !== user.id) {
+  if (!qrcode || qrcode.userId !== userId) {
     return NextResponse.json({ error: "QR code not found or unauthorized" }, { status: 404 });
   }
 
