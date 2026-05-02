@@ -107,41 +107,43 @@ export default function CheckoutButton({ qrCodeId, tier, onSuccess, userEmail = 
 
       <button
         onClick={() => setShowModal(true)}
-        className={`w-full px-4 py-2 rounded-md text-sm font-semibold transition-colors ${
+        className={`w-full py-3 rounded-2xl text-sm font-bold transition-all hover:scale-[1.02] ${
           tier === "DYNAMIC"
-            ? "bg-blue-600 text-white hover:bg-blue-700"
-            : "bg-zinc-800 text-white hover:bg-zinc-700"
+            ? "btn-primary text-white"
+            : "bg-white/10 text-white hover:bg-white/20 border border-white/10"
         }`}
       >
         Upgrade — {config.price}
       </button>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center">
-            <div className="text-4xl mb-4">🔓</div>
-            <h3 className="text-xl font-bold text-zinc-900 mb-1">{config.label}</h3>
-            <p className="text-zinc-500 text-sm mb-6">{config.description}</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="glass rounded-[2rem] shadow-2xl w-full max-w-sm p-8 text-center relative overflow-hidden border-white/20">
+            <div className="absolute -top-20 -left-20 w-40 h-40 bg-primary/30 blur-[80px]"></div>
+            
+            <div className="text-5xl mb-6">🚀</div>
+            <h3 className="text-2xl font-black text-white mb-2">{config.label}</h3>
+            <p className="text-zinc-400 text-sm mb-8 leading-relaxed">{config.description}</p>
 
-            <div className="bg-zinc-50 rounded-xl p-4 mb-6">
-              <p className="text-3xl font-extrabold text-zinc-900">{config.price}</p>
-              <p className="text-zinc-400 text-xs mt-1">One-time payment · Lifetime access</p>
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-8">
+              <p className="text-4xl font-black text-white">{config.price}</p>
+              <p className="text-zinc-500 text-xs mt-2 uppercase tracking-widest font-bold">One-time payment · Lifetime access</p>
             </div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => { setShowModal(false); setLoading(false); }}
-                className="flex-1 py-3 rounded-xl border border-zinc-200 text-zinc-600 font-medium hover:bg-zinc-50 transition"
-                disabled={loading}
-              >
-                Cancel
-              </button>
+            <div className="flex flex-col gap-3">
               <button
                 onClick={handlePayment}
                 disabled={loading}
-                className="flex-1 py-3 rounded-xl bg-zinc-900 text-white font-semibold hover:bg-zinc-800 disabled:opacity-50 transition"
+                className="w-full py-4 rounded-2xl font-bold btn-primary text-white disabled:opacity-50 transition-all"
               >
-                {loading ? "Opening..." : `Pay ${config.price}`}
+                {loading ? "Processing..." : `Complete Purchase`}
+              </button>
+              <button
+                onClick={() => { setShowModal(false); setLoading(false); }}
+                className="w-full py-3 rounded-2xl text-zinc-500 font-bold hover:text-white transition-colors"
+                disabled={loading}
+              >
+                Back to Dashboard
               </button>
             </div>
           </div>
