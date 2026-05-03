@@ -73,7 +73,7 @@ export default function CheckoutButton({ qrCodeId, tier, onSuccess, userEmail = 
           email: userEmail,
         },
         theme: {
-          color: "#18181b",
+          color: "#6366f1",
         },
         modal: {
           ondismiss: () => {
@@ -110,24 +110,24 @@ export default function CheckoutButton({ qrCodeId, tier, onSuccess, userEmail = 
         className={`w-full py-3 rounded-2xl text-sm font-bold transition-all hover:scale-[1.02] ${
           tier === "DYNAMIC"
             ? "btn-primary text-white"
-            : "bg-white/10 text-white hover:bg-white/20 border border-white/10"
+            : "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
         }`}
       >
         Upgrade — {config.price}
       </button>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="glass rounded-[2rem] shadow-2xl w-full max-w-sm p-8 text-center relative overflow-hidden border-white/20">
-            <div className="absolute -top-20 -left-20 w-40 h-40 bg-primary/30 blur-[80px]"></div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
+          <div className="glass rounded-[2rem] shadow-2xl w-full max-w-sm p-8 text-center relative overflow-hidden border-slate-200 bg-white">
+            <div className="absolute -top-20 -left-20 w-40 h-40 bg-primary/10 blur-[80px]"></div>
             
             <div className="text-5xl mb-6">🚀</div>
-            <h3 className="text-2xl font-black text-white mb-2">{config.label}</h3>
-            <p className="text-zinc-400 text-sm mb-8 leading-relaxed">{config.description}</p>
+            <h3 className="text-2xl font-black text-slate-900 mb-2">{config.label}</h3>
+            <p className="text-slate-500 text-sm mb-8 leading-relaxed">{config.description}</p>
 
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-8">
-              <p className="text-4xl font-black text-white">{config.price}</p>
-              <p className="text-zinc-500 text-xs mt-2 uppercase tracking-widest font-bold">One-time payment · Lifetime access</p>
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 mb-8">
+              <p className="text-4xl font-black text-slate-900">{config.price}</p>
+              <p className="text-slate-400 text-xs mt-2 uppercase tracking-widest font-bold">One-time payment · Lifetime access</p>
             </div>
 
             <div className="flex flex-col gap-3">
@@ -140,7 +140,7 @@ export default function CheckoutButton({ qrCodeId, tier, onSuccess, userEmail = 
               </button>
               <button
                 onClick={() => { setShowModal(false); setLoading(false); }}
-                className="w-full py-3 rounded-2xl text-zinc-500 font-bold hover:text-white transition-colors"
+                className="w-full py-3 rounded-2xl text-slate-400 font-bold hover:text-slate-600 transition-colors"
                 disabled={loading}
               >
                 Back to Dashboard
