@@ -97,7 +97,7 @@ export default function Home() {
           <div className="absolute bottom-[10%] right-[20%] w-[35rem] h-[35rem] bg-secondary/10 rounded-full blur-[120px] animate-pulse"></div>
         </div>
 
-        <h1 className="text-6xl font-black tracking-tight mb-6 gradient-text">Premium QR Shop</h1>
+        <h1 className="text-6xl font-black tracking-tight mb-6 gradient-text">QRdoer</h1>
         <p className="text-xl text-slate-500 max-w-2xl mb-16 leading-relaxed">
           Create powerful, trackable QR codes in seconds. <br />
           Experience the next generation of dynamic routing and analytics.

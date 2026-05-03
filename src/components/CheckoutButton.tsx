@@ -43,7 +43,7 @@ export default function CheckoutButton({ qrCodeId, tier, onSuccess, userEmail = 
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: orderData.amount,
         currency: orderData.currency,
-        name: "QRShop",
+        name: "QRdoer",
         description: `${config.label} — ${config.price}`,
         order_id: orderData.id,
         handler: async function (response: any) {
