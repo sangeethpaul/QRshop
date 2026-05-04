@@ -107,13 +107,15 @@ export default function CheckoutButton({ qrCodeId, tier, onSuccess, userEmail = 
 
       <button
         onClick={() => setShowModal(true)}
-        className={`w-full py-3 rounded-2xl text-sm font-bold transition-all hover:scale-[1.02] ${
+        className={`w-full py-4 px-4 rounded-2xl text-[13px] font-black leading-tight transition-all hover:scale-[1.02] ${
           tier === "DYNAMIC"
-            ? "btn-primary text-white"
-            : "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
+            ? "btn-primary text-white shadow-lg shadow-indigo-200"
+            : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
         }`}
       >
-        Upgrade — {config.price}
+        {tier === "DYNAMIC" 
+          ? "Buy a Dynamic QR code for lifetime at 99 INR" 
+          : "Buy a Static QR code for lifetime at 49 INR"}
       </button>
 
       {showModal && (

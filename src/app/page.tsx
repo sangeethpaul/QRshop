@@ -242,8 +242,15 @@ export default function Home() {
             const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}/${qr.id}` : '';
 
             return (
-              <div key={qr.id} className="glass p-6 rounded-3xl flex flex-col items-center text-center group hover:border-primary/50 transition-all duration-300 bg-white">
-                <div className="mb-6 p-4 bg-white rounded-2xl shadow-xl shadow-indigo-100/50">
+              <div key={qr.id} className={`glass p-6 rounded-3xl flex flex-col items-center text-center group hover:border-primary/50 transition-all duration-300 bg-white relative ${expired ? 'opacity-75 grayscale-[0.5]' : ''}`}>
+                {expired && (
+                  <div className="absolute top-4 right-4 z-20">
+                    <span className="bg-rose-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-lg shadow-rose-200">
+                      Expired
+                    </span>
+                  </div>
+                )}
+                <div className={`mb-6 p-4 bg-white rounded-2xl shadow-xl ${expired ? 'shadow-slate-100' : 'shadow-indigo-100/50'}`}>
                   <QRCodeDisplay url={redirectUrl} size={240} />
                 </div>
                 
