@@ -8,6 +8,7 @@ import CheckoutButton from "@/components/CheckoutButton";
 export default function Home() {
   const { data: session, status } = useSession();
   const [qrCodes, setQrCodes] = useState<any[]>([]);
+  const [subscription, setSubscription] = useState<any>({ plan: "FREE" });
   const [urlInput, setUrlInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -17,22 +18,30 @@ export default function Home() {
 
   const isExpired = (createdAt: string, isLifetime: boolean) => {
     if (isLifetime) return false;
+    if (subscription.plan === "PRO" || subscription.plan === "BUSINESS") return false;
     const ONE_DAY = 24 * 60 * 60 * 1000;
     const now = new Date().getTime();
     const created = new Date(createdAt).getTime();
     return now - created > ONE_DAY;
   };
 
+  const limits: Record<string, number> = {
+    FREE: 3,
+    PRO: 25,
+    BUSINESS: 100,
+  };
+
+  const currentLimit = limits[subscription.plan] || 3;
   const expiredCount = qrCodes.filter(qr => isExpired(qr.createdAt, qr.isLifetime)).length;
-  const freeCount = qrCodes.filter(qr => !qr.isLifetime).length;
-  const hasReachedLimit = freeCount >= 3;
+  const hasReachedLimit = qrCodes.length >= currentLimit;
 
   const fetchQRCodes = async () => {
     try {
       const res = await fetch("/api/qrcodes");
       if (res.ok) {
         const data = await res.json();
-        setQrCodes(data);
+        setQrCodes(data.qrcodes || []);
+        setSubscription(data.subscription || { plan: "FREE" });
       }
     } catch (err) {
       console.error(err);
@@ -115,22 +124,22 @@ export default function Home() {
             { 
               name: "Free", 
               price: "0 INR", 
-              sub: "24 hour expiration",
-              features: ["Basic QR Generation", "Click Tracking", "Max 3 QR Codes"],
+              sub: "Basic access",
+              features: ["3 Dynamic QR Codes", "24h Expiration", "Basic Tracking"],
               highlight: false 
             },
             { 
-              name: "Basic", 
-              price: "49 INR", 
-              sub: "Lifetime / QR",
-              features: ["Lifetime Validity", "Click Tracking", "Static Destination"],
+              name: "Pro", 
+              price: "199 INR", 
+              sub: "Per month",
+              features: ["25 Dynamic QR Codes", "No Expiration", "Edit Anytime", "Custom Short Domain"],
               highlight: true 
             },
             { 
-              name: "Dynamic", 
-              price: "99 INR", 
-              sub: "Lifetime / QR",
-              features: ["Lifetime Validity", "Click Tracking", "Change URL Anytime"],
+              name: "Business", 
+              price: "599 INR", 
+              sub: "Per month",
+              features: ["100 Dynamic QR Codes", "Bulk Creation", "API Access", "Team Members"],
               highlight: false 
             }
           ].map((plan) => (
@@ -195,7 +204,9 @@ export default function Home() {
         <div className="flex justify-between items-center mb-12 glass p-6 rounded-3xl">
           <div>
             <h1 className="text-3xl font-black gradient-text">QRdoer Dashboard</h1>
-            <p className="text-slate-500 font-medium">Welcome back, {session.user?.name || session.user?.email}</p>
+            <p className="text-slate-500 font-medium">
+              Plan: <span className="text-indigo-600 font-black">{subscription.plan}</span> • {qrCodes.length}/{currentLimit} Codes
+            </p>
           </div>
           <button 
             onClick={() => signOut()} 
@@ -227,7 +238,7 @@ export default function Home() {
               disabled={loading || hasReachedLimit}
               className="px-10 py-4 rounded-2xl font-bold btn-primary text-white disabled:opacity-50 text-lg"
             >
-              {loading ? "Generating..." : hasReachedLimit ? "Limit Reached" : "Generate Free"}
+              {loading ? "Generating..." : hasReachedLimit ? "Limit Reached" : "Generate Dynamic"}
             </button>
           </form>
           {error && <p className="text-rose-500 mt-4 font-medium flex items-center gap-2">
@@ -248,10 +259,10 @@ export default function Home() {
                   <h3 className="text-lg font-bold">
                     {expiredCount > 0 
                       ? `${expiredCount} QR Code${expiredCount > 1 ? 's have' : ' has'} expired` 
-                      : "You've reached your free limit"}
+                      : "You've reached your plan limit"}
                   </h3>
                   <p className="text-indigo-100 text-sm font-medium">
-                    Upgrade to Lifetime to keep your codes active and unlock dynamic editing.
+                    Upgrade to a premium plan to unlock more slots and remove expiration.
                   </p>
                 </div>
               </div>
@@ -259,7 +270,7 @@ export default function Home() {
                 onClick={() => setShowUpgradeModal(true)}
                 className="px-8 py-3 bg-white text-indigo-600 rounded-xl font-bold hover:bg-indigo-50 transition-colors shadow-lg shadow-indigo-900/20 whitespace-nowrap"
               >
-                Upgrade Now
+                Upgrade Plan
               </button>
             </div>
           </div>
@@ -353,7 +364,7 @@ export default function Home() {
 
       {showUpgradeModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xl animate-in fade-in duration-300">
-          <div className="glass rounded-[3rem] shadow-2xl w-full max-w-2xl p-8 md:p-12 relative overflow-hidden bg-white border-slate-200 flex flex-col max-h-[90vh]">
+          <div className="glass rounded-[3rem] shadow-2xl w-full max-w-4xl p-8 md:p-12 relative overflow-hidden bg-white border-slate-200 flex flex-col max-h-[90vh]">
             <div className="absolute -top-32 -right-32 w-64 h-64 bg-primary/10 blur-[100px]"></div>
             
             <div className="flex justify-between items-center mb-8 shrink-0">
@@ -362,8 +373,8 @@ export default function Home() {
                   ⚡
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black text-slate-900 leading-none mb-1">Upgrade Your Codes</h3>
-                  <p className="text-slate-500 text-sm font-medium">Select a QR code to unlock lifetime access</p>
+                  <h3 className="text-2xl font-black text-slate-900 leading-none mb-1">Upgrade Your Plan</h3>
+                  <p className="text-slate-500 text-sm font-medium">Select a plan to unlock more features</p>
                 </div>
               </div>
               <button 
@@ -377,57 +388,53 @@ export default function Home() {
             </div>
 
             <div className="overflow-y-auto pr-2 custom-scrollbar">
-              <div className="space-y-4">
-                {qrCodes.filter(qr => !qr.isDynamic).length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-slate-400 font-bold">All your codes are already Premium! 🚀</p>
+              <div className="grid md:grid-cols-2 gap-8">
+                {[
+                  {
+                    id: "PRO",
+                    name: "Pro Plan",
+                    price: "199 INR",
+                    features: ["25 Dynamic QR Codes", "No Expiration", "Custom Short Domain", "Basic Analytics"],
+                    highlight: true
+                  },
+                  {
+                    id: "BUSINESS",
+                    name: "Business Plan",
+                    price: "599 INR",
+                    features: ["100 Dynamic QR Codes", "API Access", "Bulk Creation", "Team Members", "Premium Reports"],
+                    highlight: false
+                  }
+                ].map((plan) => (
+                  <div key={plan.id} className={`p-8 rounded-[2rem] border transition-all ${plan.highlight ? 'bg-indigo-50/30 border-indigo-100 ring-2 ring-indigo-500/10' : 'bg-slate-50 border-slate-100'}`}>
+                    <h4 className="text-xl font-black text-slate-900 mb-2">{plan.name}</h4>
+                    <div className="flex items-baseline gap-1 mb-6">
+                      <span className="text-3xl font-black text-slate-900">{plan.price}</span>
+                      <span className="text-slate-500 text-sm font-bold">/mo</span>
+                    </div>
+                    <ul className="space-y-4 mb-8">
+                      {plan.features.map(f => (
+                        <li key={f} className="text-sm font-bold text-slate-600 flex items-center gap-3">
+                          <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <CheckoutButton 
+                      plan={plan.id as any} 
+                      onSuccess={() => { fetchQRCodes(); setShowUpgradeModal(false); }} 
+                      userEmail={session.user?.email || ""} 
+                      userName={session.user?.name || ""} 
+                    />
                   </div>
-                ) : (
-                  qrCodes.filter(qr => !qr.isDynamic).map((qr) => {
-                    const expired = isExpired(qr.createdAt, qr.isLifetime);
-                    return (
-                      <div key={qr.id} className={`p-6 rounded-3xl border transition-all ${expired ? 'bg-rose-50 border-rose-100' : 'bg-slate-50 border-slate-100'}`}>
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter ${expired ? 'bg-rose-500 text-white' : 'bg-slate-200 text-slate-600'}`}>
-                                {expired ? 'Expired' : qr.isLifetime ? 'Basic' : 'Free'}
-                              </span>
-                              <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">{qr.clicks} Engagements</span>
-                            </div>
-                            <p className="text-slate-900 font-bold break-all line-clamp-1">{qr.destinationUrl}</p>
-                          </div>
-                          <div className="flex flex-wrap gap-2 shrink-0">
-                            {!qr.isLifetime && (
-                              <CheckoutButton 
-                                qrCodeId={qr.id} 
-                                tier="BASIC" 
-                                variant="compact"
-                                onSuccess={() => { fetchQRCodes(); setShowUpgradeModal(false); }} 
-                                userEmail={session.user?.email || ""} 
-                                userName={session.user?.name || ""} 
-                              />
-                            )}
-                            <CheckoutButton 
-                              qrCodeId={qr.id} 
-                              tier="DYNAMIC" 
-                              variant="compact"
-                              onSuccess={() => { fetchQRCodes(); setShowUpgradeModal(false); }} 
-                              userEmail={session.user?.email || ""} 
-                              userName={session.user?.name || ""} 
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
+                ))}
               </div>
             </div>
 
             <div className="mt-8 pt-6 border-t border-slate-100 shrink-0">
               <p className="text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">
-                All upgrades include lifetime hosting and high-resolution downloads
+                Cancel anytime. All plans include priority support and high-resolution downloads.
               </p>
             </div>
           </div>

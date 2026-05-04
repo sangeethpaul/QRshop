@@ -12,16 +12,16 @@ interface CheckoutButtonProps {
   variant?: "full" | "compact";
 }
 
-const TIER_CONFIG = {
-  BASIC: { label: "Basic Lifetime", price: "₹49", shortLabel: "Go Basic", description: "Lifetime validity + click tracking" },
-  DYNAMIC: { label: "Dynamic Lifetime", price: "₹99", shortLabel: "Go Dynamic", description: "Lifetime validity + change URL anytime" },
+const PLAN_CONFIG = {
+  PRO: { label: "Pro Plan", price: "₹199", shortLabel: "Go Pro", description: "25 dynamic QRs, custom domain, no expiry" },
+  BUSINESS: { label: "Business Plan", price: "₹599", shortLabel: "Go Business", description: "100 dynamic QRs, bulk creation, API access" },
 };
 
-export default function CheckoutButton({ qrCodeId, tier, onSuccess, userEmail = "", userName = "", variant = "full" }: CheckoutButtonProps) {
+export default function CheckoutButton({ plan, onSuccess, userEmail = "", userName = "", variant = "full" }: { plan: "PRO" | "BUSINESS", onSuccess: () => void, userEmail?: string, userName?: string, variant?: "full" | "compact" }) {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  const config = TIER_CONFIG[tier];
+  const config = PLAN_CONFIG[plan];
 
   const handlePayment = async () => {
     setLoading(true);
@@ -30,7 +30,7 @@ export default function CheckoutButton({ qrCodeId, tier, onSuccess, userEmail = 
       const res = await fetch("/api/checkout/razorpay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ qrCodeId, tier }),
+        body: JSON.stringify({ plan }),
       });
 
       const orderData = await res.json();
@@ -45,10 +45,10 @@ export default function CheckoutButton({ qrCodeId, tier, onSuccess, userEmail = 
         amount: orderData.amount,
         currency: orderData.currency,
         name: "QRdoer",
-        description: `${config.label} — ${config.price}`,
+        description: `${config.label} — ${config.price}/mo`,
         order_id: orderData.id,
         handler: async function (response: any) {
-          // Step 3: Verify payment on the server and upgrade QR code
+          // Step 3: Verify payment on the server and upgrade subscription
           const verifyRes = await fetch("/api/checkout/verify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -56,8 +56,7 @@ export default function CheckoutButton({ qrCodeId, tier, onSuccess, userEmail = 
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              qrCodeId,
-              tier,
+              plan,
             }),
           });
 
@@ -111,15 +110,15 @@ export default function CheckoutButton({ qrCodeId, tier, onSuccess, userEmail = 
       <button
         onClick={() => setShowModal(true)}
         className={`${isCompact ? 'px-4 py-2 rounded-xl text-[11px]' : 'w-full py-4 px-4 rounded-2xl text-[13px]'} font-black leading-tight transition-all hover:scale-[1.02] ${
-          tier === "DYNAMIC"
+          plan === "BUSINESS"
             ? "btn-primary text-white shadow-lg shadow-indigo-200"
             : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
         }`}
       >
         {isCompact ? config.shortLabel : (
-          tier === "DYNAMIC" 
-            ? "Buy a Dynamic QR code for lifetime at 99 INR" 
-            : "Buy a Static QR code for lifetime at 49 INR"
+          plan === "BUSINESS" 
+            ? `Upgrade to ${config.label} at ${config.price}/mo` 
+            : `Upgrade to ${config.label} at ${config.price}/mo`
         )}
       </button>
 

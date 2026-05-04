@@ -20,7 +20,14 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
   });
 
-  return NextResponse.json(qrcodes);
+  const subscription = await prisma.subscription.findUnique({
+    where: { userId },
+  });
+
+  return NextResponse.json({ 
+    qrcodes, 
+    subscription: subscription || { plan: "FREE" } 
+  });
 }
 
 export async function POST(req: Request) {
@@ -45,21 +52,37 @@ export async function POST(req: Request) {
     destinationUrl = `http://${destinationUrl}`;
   }
 
-  // Check free QR code limit (max 3 per user, admins exempt)
-  const adminEmails = ["sangeeth.paul@gmail.com"];
-  const userEmail = session?.user?.email || "";
+  // Fetch user subscription
+  let subscription = await prisma.subscription.findUnique({
+    where: { userId },
+  });
 
-  if (!adminEmails.includes(userEmail)) {
-    const freeQrCodeCount = await prisma.qRCode.count({
-      where: { userId, isLifetime: false },
+  // Default to FREE if no subscription found
+  if (!subscription) {
+    subscription = await prisma.subscription.create({
+      data: { userId, plan: "FREE" },
     });
+  }
 
-    if (freeQrCodeCount >= 3) {
-      return NextResponse.json(
-        { error: "You have reached the maximum limit of 3 free QR codes." },
-        { status: 403 }
-      );
-    }
+  // Enforce limits
+  const limits: Record<string, number> = {
+    FREE: 3,
+    PRO: 25,
+    BUSINESS: 100,
+  };
+
+  const currentLimit = limits[subscription.plan] || 3;
+  
+  // Count current QR codes (only those created under this plan model)
+  const qrCodeCount = await prisma.qRCode.count({
+    where: { userId },
+  });
+
+  if (qrCodeCount >= currentLimit) {
+    return NextResponse.json(
+      { error: `You have reached the limit for your ${subscription.plan} plan (${currentLimit} QR codes).` },
+      { status: 403 }
+    );
   }
 
   const qrcode = await prisma.qRCode.create({
@@ -67,6 +90,7 @@ export async function POST(req: Request) {
       destinationUrl,
       userId,
       userEmail: session?.user?.email || "",
+      isDynamic: true, // All new codes are dynamic under the new model
     },
   });
 

@@ -17,33 +17,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { qrCodeId, tier } = await req.json();
+  const { plan } = await req.json();
 
-  if (!qrCodeId || !tier || !["BASIC", "DYNAMIC"].includes(tier)) {
+  if (!plan || !["PRO", "BUSINESS"].includes(plan)) {
     return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
   }
 
-  // Verify QR code belongs to user
-  const qrcode = await prisma.qRCode.findUnique({
-    where: { id: qrCodeId },
-  });
 
-  if (!qrcode || qrcode.userId !== userId) {
-    return NextResponse.json({ error: "QR code not found or unauthorized" }, { status: 404 });
-  }
 
   let amount = 0;
-  if (tier === "BASIC") {
-    amount = 4900; // 49 INR
-  } else if (tier === "DYNAMIC") {
-    amount = 9900; // 99 INR
+  if (plan === "PRO") {
+    amount = 19900; // 199 INR
+  } else if (plan === "BUSINESS") {
+    amount = 59900; // 599 INR
   }
 
   try {
     const order = await razorpay.orders.create({
       amount,
       currency: "INR",
-      receipt: `receipt_${qrCodeId}_${Date.now()}`,
+      receipt: `receipt_${userId}_${Date.now()}`,
     });
 
     return NextResponse.json(order);
