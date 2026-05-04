@@ -14,6 +14,14 @@ export default function Home() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editUrl, setEditUrl] = useState("");
 
+  const isExpired = (createdAt: string, isLifetime: boolean) => {
+    if (isLifetime) return false;
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+    const now = new Date().getTime();
+    const created = new Date(createdAt).getTime();
+    return now - created > ONE_DAY;
+  };
+
   const expiredCount = qrCodes.filter(qr => isExpired(qr.createdAt, qr.isLifetime)).length;
   const freeCount = qrCodes.filter(qr => !qr.isLifetime).length;
   const hasReachedLimit = freeCount >= 3;
@@ -83,13 +91,6 @@ export default function Home() {
     }
   };
 
-  const isExpired = (createdAt: string, isLifetime: boolean) => {
-    if (isLifetime) return false;
-    const ONE_DAY = 24 * 60 * 60 * 1000;
-    const now = new Date().getTime();
-    const created = new Date(createdAt).getTime();
-    return now - created > ONE_DAY;
-  };
 
   if (status === "loading") return <div className="min-h-screen flex items-center justify-center text-slate-900">Loading...</div>;
 
