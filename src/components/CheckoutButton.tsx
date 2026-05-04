@@ -9,14 +9,15 @@ interface CheckoutButtonProps {
   onSuccess: () => void;
   userEmail?: string;
   userName?: string;
+  variant?: "full" | "compact";
 }
 
 const TIER_CONFIG = {
-  BASIC: { label: "Basic Lifetime", price: "₹49", description: "Lifetime validity + click tracking" },
-  DYNAMIC: { label: "Dynamic Lifetime", price: "₹99", description: "Lifetime validity + change URL anytime" },
+  BASIC: { label: "Basic Lifetime", price: "₹49", shortLabel: "Go Basic", description: "Lifetime validity + click tracking" },
+  DYNAMIC: { label: "Dynamic Lifetime", price: "₹99", shortLabel: "Go Dynamic", description: "Lifetime validity + change URL anytime" },
 };
 
-export default function CheckoutButton({ qrCodeId, tier, onSuccess, userEmail = "", userName = "" }: CheckoutButtonProps) {
+export default function CheckoutButton({ qrCodeId, tier, onSuccess, userEmail = "", userName = "", variant = "full" }: CheckoutButtonProps) {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
@@ -97,6 +98,8 @@ export default function CheckoutButton({ qrCodeId, tier, onSuccess, userEmail = 
     }
   };
 
+  const isCompact = variant === "compact";
+
   return (
     <>
       <Script
@@ -107,15 +110,17 @@ export default function CheckoutButton({ qrCodeId, tier, onSuccess, userEmail = 
 
       <button
         onClick={() => setShowModal(true)}
-        className={`w-full py-4 px-4 rounded-2xl text-[13px] font-black leading-tight transition-all hover:scale-[1.02] ${
+        className={`${isCompact ? 'px-4 py-2 rounded-xl text-[11px]' : 'w-full py-4 px-4 rounded-2xl text-[13px]'} font-black leading-tight transition-all hover:scale-[1.02] ${
           tier === "DYNAMIC"
             ? "btn-primary text-white shadow-lg shadow-indigo-200"
             : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
         }`}
       >
-        {tier === "DYNAMIC" 
-          ? "Buy a Dynamic QR code for lifetime at 99 INR" 
-          : "Buy a Static QR code for lifetime at 49 INR"}
+        {isCompact ? config.shortLabel : (
+          tier === "DYNAMIC" 
+            ? "Buy a Dynamic QR code for lifetime at 99 INR" 
+            : "Buy a Static QR code for lifetime at 49 INR"
+        )}
       </button>
 
       {showModal && (

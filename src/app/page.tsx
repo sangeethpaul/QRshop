@@ -14,6 +14,10 @@ export default function Home() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editUrl, setEditUrl] = useState("");
 
+  const expiredCount = qrCodes.filter(qr => isExpired(qr.createdAt, qr.isLifetime)).length;
+  const freeCount = qrCodes.filter(qr => !qr.isLifetime).length;
+  const hasReachedLimit = freeCount >= 3;
+
   const fetchQRCodes = async () => {
     try {
       const res = await fetch("/api/qrcodes");
@@ -218,10 +222,10 @@ export default function Home() {
             </div>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || hasReachedLimit}
               className="px-10 py-4 rounded-2xl font-bold btn-primary text-white disabled:opacity-50 text-lg"
             >
-              {loading ? "Generating..." : "Generate Free"}
+              {loading ? "Generating..." : hasReachedLimit ? "Limit Reached" : "Generate Free"}
             </button>
           </form>
           {error && <p className="text-rose-500 mt-4 font-medium flex items-center gap-2">
@@ -229,6 +233,43 @@ export default function Home() {
             {error}
           </p>}
         </div>
+        
+        {(expiredCount > 0 || hasReachedLimit) && (
+          <div className="mb-8 p-6 rounded-3xl bg-indigo-600 text-white shadow-xl shadow-indigo-200 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
+            <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl backdrop-blur-sm">
+                  {expiredCount > 0 ? "⚠️" : "🚀"}
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold">
+                    {expiredCount > 0 
+                      ? `${expiredCount} QR Code${expiredCount > 1 ? 's have' : ' has'} expired` 
+                      : "You've reached your free limit"}
+                  </h3>
+                  <p className="text-indigo-100 text-sm font-medium">
+                    Upgrade to Lifetime to keep your codes active and unlock dynamic editing.
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => {
+                  const targetQr = qrCodes.find(qr => isExpired(qr.createdAt, qr.isLifetime)) || qrCodes.find(qr => !qr.isLifetime);
+                  if (targetQr) {
+                    const el = document.getElementById(`qr-${targetQr.id}`);
+                    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el?.classList.add('ring-4', 'ring-white/50');
+                    setTimeout(() => el?.classList.remove('ring-4', 'ring-white/50'), 2000);
+                  }
+                }}
+                className="px-8 py-3 bg-white text-indigo-600 rounded-xl font-bold hover:bg-indigo-50 transition-colors shadow-lg shadow-indigo-900/20 whitespace-nowrap"
+              >
+                Upgrade Now
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
@@ -243,7 +284,7 @@ export default function Home() {
             const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}/${qr.id}` : '';
 
             return (
-              <div key={qr.id} className={`glass p-6 rounded-3xl flex flex-col items-center text-center group hover:border-primary/50 transition-all duration-300 bg-white relative ${expired ? 'opacity-75 grayscale-[0.5]' : ''}`}>
+              <div key={qr.id} id={`qr-${qr.id}`} className={`glass p-6 rounded-3xl flex flex-col items-center text-center group hover:border-primary/50 transition-all duration-300 bg-white relative ${expired ? 'opacity-75 grayscale-[0.5]' : ''}`}>
                 {expired && (
                   <div className="absolute top-4 right-4 z-20">
                     <span className="bg-rose-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-lg shadow-rose-200">
@@ -290,17 +331,41 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="mt-auto w-full space-y-3">
-                  {!qr.isLifetime && (
-                    <div className="flex flex-col gap-3">
-                      <CheckoutButton qrCodeId={qr.id} tier="BASIC" onSuccess={fetchQRCodes} userEmail={session.user?.email || ""} userName={session.user?.name || ""} />
-                      <CheckoutButton qrCodeId={qr.id} tier="DYNAMIC" onSuccess={fetchQRCodes} userEmail={session.user?.email || ""} userName={session.user?.name || ""} />
+                <div className="mt-auto w-full">
+                  {!qr.isLifetime ? (
+                    <div className="flex flex-col gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">Upgrade to Lifetime</p>
+                      <div className="flex gap-2">
+                        <CheckoutButton 
+                          qrCodeId={qr.id} 
+                          tier="BASIC" 
+                          variant="compact"
+                          onSuccess={fetchQRCodes} 
+                          userEmail={session.user?.email || ""} 
+                          userName={session.user?.name || ""} 
+                        />
+                        <CheckoutButton 
+                          qrCodeId={qr.id} 
+                          tier="DYNAMIC" 
+                          variant="compact"
+                          onSuccess={fetchQRCodes} 
+                          userEmail={session.user?.email || ""} 
+                          userName={session.user?.name || ""} 
+                        />
+                      </div>
                     </div>
-                  )}
-                  {qr.isLifetime && !qr.isDynamic && (
-                    <CheckoutButton qrCodeId={qr.id} tier="DYNAMIC" onSuccess={fetchQRCodes} userEmail={session.user?.email || ""} userName={session.user?.name || ""} />
-                  )}
-                  {qr.isDynamic && editingId !== qr.id && (
+                  ) : qr.isLifetime && !qr.isDynamic ? (
+                    <div className="p-3 bg-indigo-50/50 rounded-2xl border border-indigo-100">
+                      <CheckoutButton 
+                        qrCodeId={qr.id} 
+                        tier="DYNAMIC" 
+                        variant="full"
+                        onSuccess={fetchQRCodes} 
+                        userEmail={session.user?.email || ""} 
+                        userName={session.user?.name || ""} 
+                      />
+                    </div>
+                  ) : qr.isDynamic && editingId !== qr.id ? (
                     <button
                       onClick={() => {
                         setEditingId(qr.id);
@@ -310,7 +375,7 @@ export default function Home() {
                     >
                       Update Destination
                     </button>
-                  )}
+                  ) : null}
                 </div>
               </div>
             );
