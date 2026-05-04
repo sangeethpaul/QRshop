@@ -97,7 +97,8 @@ export default function Home() {
           <div className="absolute bottom-[10%] right-[20%] w-[35rem] h-[35rem] bg-secondary/10 rounded-full blur-[120px] animate-pulse"></div>
         </div>
 
-        <h1 className="text-6xl font-black tracking-tight mb-6 gradient-text">QRdoer</h1>
+        <h1 className="text-6xl font-black tracking-tight mb-2 gradient-text">QRdoer</h1>
+        <p className="text-xl font-bold text-indigo-600 mb-6 tracking-wide uppercase text-sm">QR Code Generator - Get it done</p>
         <p className="text-xl text-slate-500 max-w-2xl mb-16 leading-relaxed">
           Create powerful, trackable QR codes in seconds. <br />
           Experience the next generation of dynamic routing and analytics.
@@ -187,7 +188,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-12 glass p-6 rounded-3xl">
           <div>
-            <h1 className="text-3xl font-black gradient-text">Dashboard</h1>
+            <h1 className="text-3xl font-black gradient-text">QRdoer Dashboard</h1>
             <p className="text-slate-500 font-medium">Welcome back, {session.user?.name || session.user?.email}</p>
           </div>
           <button 

@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "QRdoer — Premium QR Code Service",
-  description: "Create, manage, and track powerful dynamic QR codes with QRdoer.",
+  title: "QRdoer — QR Code Generator - Get it done",
+  description: "QR Code Generator - Get it done. Create, manage, and track powerful dynamic QR codes with QRdoer.",
 };
 
 export default function RootLayout({
