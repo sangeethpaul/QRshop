@@ -13,6 +13,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editUrl, setEditUrl] = useState("");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const isExpired = (createdAt: string, isLifetime: boolean) => {
     if (isLifetime) return false;
@@ -254,16 +255,7 @@ export default function Home() {
                   </p>
                 </div>
               </div>
-              <button 
-                onClick={() => {
-                  const targetQr = qrCodes.find(qr => isExpired(qr.createdAt, qr.isLifetime)) || qrCodes.find(qr => !qr.isLifetime);
-                  if (targetQr) {
-                    const el = document.getElementById(`qr-${targetQr.id}`);
-                    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    el?.classList.add('ring-4', 'ring-white/50');
-                    setTimeout(() => el?.classList.remove('ring-4', 'ring-white/50'), 2000);
-                  }
-                }}
+                onClick={() => setShowUpgradeModal(true)}
                 className="px-8 py-3 bg-white text-indigo-600 rounded-xl font-bold hover:bg-indigo-50 transition-colors shadow-lg shadow-indigo-900/20 whitespace-nowrap"
               >
                 Upgrade Now
@@ -333,40 +325,7 @@ export default function Home() {
                 </div>
 
                 <div className="mt-auto w-full">
-                  {!qr.isLifetime ? (
-                    <div className="flex flex-col gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">Upgrade to Lifetime</p>
-                      <div className="flex gap-2">
-                        <CheckoutButton 
-                          qrCodeId={qr.id} 
-                          tier="BASIC" 
-                          variant="compact"
-                          onSuccess={fetchQRCodes} 
-                          userEmail={session.user?.email || ""} 
-                          userName={session.user?.name || ""} 
-                        />
-                        <CheckoutButton 
-                          qrCodeId={qr.id} 
-                          tier="DYNAMIC" 
-                          variant="compact"
-                          onSuccess={fetchQRCodes} 
-                          userEmail={session.user?.email || ""} 
-                          userName={session.user?.name || ""} 
-                        />
-                      </div>
-                    </div>
-                  ) : qr.isLifetime && !qr.isDynamic ? (
-                    <div className="p-3 bg-indigo-50/50 rounded-2xl border border-indigo-100">
-                      <CheckoutButton 
-                        qrCodeId={qr.id} 
-                        tier="DYNAMIC" 
-                        variant="full"
-                        onSuccess={fetchQRCodes} 
-                        userEmail={session.user?.email || ""} 
-                        userName={session.user?.name || ""} 
-                      />
-                    </div>
-                  ) : qr.isDynamic && editingId !== qr.id ? (
+                  {qr.isDynamic && editingId !== qr.id && (
                     <button
                       onClick={() => {
                         setEditingId(qr.id);
@@ -376,7 +335,7 @@ export default function Home() {
                     >
                       Update Destination
                     </button>
-                  ) : null}
+                  )}
                 </div>
               </div>
             );
@@ -390,6 +349,89 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {showUpgradeModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xl animate-in fade-in duration-300">
+          <div className="glass rounded-[3rem] shadow-2xl w-full max-w-2xl p-8 md:p-12 relative overflow-hidden bg-white border-slate-200 flex flex-col max-h-[90vh]">
+            <div className="absolute -top-32 -right-32 w-64 h-64 bg-primary/10 blur-[100px]"></div>
+            
+            <div className="flex justify-between items-center mb-8 shrink-0">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-indigo-200">
+                  ⚡
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900 leading-none mb-1">Upgrade Your Codes</h3>
+                  <p className="text-slate-500 text-sm font-medium">Select a QR code to unlock lifetime access</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowUpgradeModal(false)}
+                className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
+              >
+                <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="overflow-y-auto pr-2 custom-scrollbar">
+              <div className="space-y-4">
+                {qrCodes.filter(qr => !qr.isDynamic).length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-slate-400 font-bold">All your codes are already Premium! 🚀</p>
+                  </div>
+                ) : (
+                  qrCodes.filter(qr => !qr.isDynamic).map((qr) => {
+                    const expired = isExpired(qr.createdAt, qr.isLifetime);
+                    return (
+                      <div key={qr.id} className={`p-6 rounded-3xl border transition-all ${expired ? 'bg-rose-50 border-rose-100' : 'bg-slate-50 border-slate-100'}`}>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter ${expired ? 'bg-rose-500 text-white' : 'bg-slate-200 text-slate-600'}`}>
+                                {expired ? 'Expired' : qr.isLifetime ? 'Basic' : 'Free'}
+                              </span>
+                              <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">{qr.clicks} Engagements</span>
+                            </div>
+                            <p className="text-slate-900 font-bold break-all line-clamp-1">{qr.destinationUrl}</p>
+                          </div>
+                          <div className="flex flex-wrap gap-2 shrink-0">
+                            {!qr.isLifetime && (
+                              <CheckoutButton 
+                                qrCodeId={qr.id} 
+                                tier="BASIC" 
+                                variant="compact"
+                                onSuccess={() => { fetchQRCodes(); setShowUpgradeModal(false); }} 
+                                userEmail={session.user?.email || ""} 
+                                userName={session.user?.name || ""} 
+                              />
+                            )}
+                            <CheckoutButton 
+                              qrCodeId={qr.id} 
+                              tier="DYNAMIC" 
+                              variant="compact"
+                              onSuccess={() => { fetchQRCodes(); setShowUpgradeModal(false); }} 
+                              userEmail={session.user?.email || ""} 
+                              userName={session.user?.name || ""} 
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-slate-100 shrink-0">
+              <p className="text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                All upgrades include lifetime hosting and high-resolution downloads
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
