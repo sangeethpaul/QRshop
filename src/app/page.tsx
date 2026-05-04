@@ -255,6 +255,7 @@ export default function Home() {
                   </p>
                 </div>
               </div>
+              <button 
                 onClick={() => setShowUpgradeModal(true)}
                 className="px-8 py-3 bg-white text-indigo-600 rounded-xl font-bold hover:bg-indigo-50 transition-colors shadow-lg shadow-indigo-900/20 whitespace-nowrap"
               >
