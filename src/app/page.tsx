@@ -252,7 +252,7 @@ export default function Home() {
                   </div>
                 )}
                 <div className={`mb-6 p-4 bg-white rounded-2xl shadow-xl ${expired ? 'shadow-slate-100' : 'shadow-indigo-100/50'}`}>
-                  <QRCodeDisplay url={redirectUrl} size={240} />
+                  <QRCodeDisplay url={redirectUrl} size={240} isExpired={expired} />
                 </div>
                 
                 <div className="mb-6 w-full px-2">

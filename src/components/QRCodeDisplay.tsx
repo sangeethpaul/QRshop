@@ -6,9 +6,10 @@ import QRCode from "qrcode";
 interface QRCodeDisplayProps {
   url: string;
   size?: number;
+  isExpired?: boolean;
 }
 
-export default function QRCodeDisplay({ url, size = 200 }: QRCodeDisplayProps) {
+export default function QRCodeDisplay({ url, size = 200, isExpired = false }: QRCodeDisplayProps) {
   const [src, setSrc] = useState<string>("");
   const [highResSrc, setHighResSrc] = useState<string>("");
 
@@ -56,24 +57,26 @@ export default function QRCodeDisplay({ url, size = 200 }: QRCodeDisplayProps) {
     <div className="flex flex-col items-center">
       <img src={src} alt="QR Code" width={size} height={size} className="rounded-xl shadow-lg" />
       
-      <div className="mt-6 flex flex-wrap justify-center gap-2">
-        <a 
-          href={highResSrc} 
-          download="qrdoer-high-res.png" 
-          className="text-[10px] font-black text-indigo-600 uppercase tracking-tighter flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-xl hover:bg-slate-200 transition-all border border-slate-200"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-          High-Res PNG
-        </a>
-        
-        <button 
-          onClick={handlePrint}
-          className="text-[10px] font-black text-indigo-600 uppercase tracking-tighter flex items-center gap-2 px-3 py-2 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition-all border border-indigo-100"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-          Print A4
-        </button>
-      </div>
+      {!isExpired && (
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <a 
+            href={highResSrc} 
+            download="qrdoer-high-res.png" 
+            className="text-[10px] font-black text-indigo-600 uppercase tracking-tighter flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-xl hover:bg-slate-200 transition-all border border-slate-200"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            High-Res PNG
+          </a>
+          
+          <button 
+            onClick={handlePrint}
+            className="text-[10px] font-black text-indigo-600 uppercase tracking-tighter flex items-center gap-2 px-3 py-2 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition-all border border-indigo-100"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            Print A4
+          </button>
+        </div>
+      )}
     </div>
   );
 }
