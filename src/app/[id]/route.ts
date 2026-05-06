@@ -76,6 +76,7 @@ export async function GET(
 
     switch (qrcode.type) {
       case "WIFI":
+        const wifiUri = `WIFI:S:${data.ssid};T:${data.encryption || 'WPA'};P:${data.password || ''};H:${data.hidden ? 'true' : 'false'};;`;
         contentHtml = `
           <div class="info-card">
             <div class="icon">📶</div>
@@ -88,14 +89,24 @@ export async function GET(
               <label>Password</label>
               <div class="value password-field">
                 <span id="pass">${data.password || "No Password"}</span>
-                <button onclick="copyPass()">Copy</button>
+                <button onclick="copyPass()" class="copy-btn">Copy</button>
               </div>
             </div>
             <div class="field">
               <label>Encryption</label>
               <div class="value">${data.encryption || "WPA"}</div>
             </div>
+            <a href="${wifiUri}" class="primary-btn connect-btn">Connect to WiFi</a>
+            <p class="hint">Click above to join network automatically</p>
           </div>
+          <script>
+            // Auto-trigger WiFi connection prompt on load
+            window.onload = () => {
+              setTimeout(() => {
+                window.location.href = "${wifiUri}";
+              }, 1000);
+            };
+          </script>
         `;
         break;
       case "VCARD":
@@ -186,8 +197,11 @@ export async function GET(
             .value { font-size: 1.125rem; font-weight: 600; color: #1e293b; word-break: break-all; }
             .password-field { display: flex; justify-content: space-between; align-items: center; background: #f1f5f9; padding: 0.75rem 1rem; border-radius: 0.75rem; }
             button, .primary-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 1rem; border-radius: 1rem; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.2s; margin-top: 1rem; text-decoration: none; display: block; box-sizing: border-box; }
+            .copy-btn { width: auto; margin-top: 0; padding: 0.5rem 1rem; font-size: 0.75rem; border-radius: 0.5rem; background: #e2e8f0; color: #475569; }
+            .connect-btn { background: #10b981; margin-top: 2rem; box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.2); }
             button:hover, .primary-btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
             .text-content { background: #f1f5f9; padding: 1.5rem; border-radius: 1rem; text-align: left; line-height: 1.5; margin-bottom: 1rem; }
+            .hint { font-size: 0.75rem; color: #94a3b8; margin-top: 0.75rem; font-weight: 500; }
             .footer { text-align: center; margin-top: 2rem; color: #94a3b8; font-size: 0.875rem; }
             .footer a { color: var(--primary); text-decoration: none; font-weight: 700; }
           </style>

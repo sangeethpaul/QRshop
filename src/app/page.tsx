@@ -16,6 +16,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editUrl, setEditUrl] = useState("");
+  const [editData, setEditData] = useState<any>({});
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [currency, setCurrency] = useState<"INR" | "USD">("INR");
 
@@ -149,7 +150,10 @@ export default function Home() {
       const res = await fetch(`/api/qrcodes/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ destinationUrl: editUrl }),
+        body: JSON.stringify({ 
+          destinationUrl: editUrl,
+          targetData: editData 
+        }),
       });
 
       if (!res.ok) {
@@ -541,22 +545,55 @@ export default function Home() {
                 <div className="mb-6 w-full px-2">
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Destination</p>
                   {editingId === qr.id ? (
-                    <div className="flex flex-col gap-2">
-                      <input
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-slate-900"
-                        value={editUrl}
-                        onChange={(e) => setEditUrl(e.target.value)}
-                        autoFocus
-                      />
+                    <div className="flex flex-col gap-3 w-full">
+                      {qr.type === 'URL' ? (
+                        <input
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-slate-900"
+                          value={editUrl}
+                          onChange={(e) => setEditUrl(e.target.value)}
+                          autoFocus
+                          placeholder="https://example.com"
+                        />
+                      ) : qr.type === 'WIFI' ? (
+                        <div className="space-y-2">
+                          <input
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-slate-900"
+                            value={editData.ssid || ""}
+                            onChange={(e) => setEditData({ ...editData, ssid: e.target.value })}
+                            placeholder="SSID"
+                          />
+                          <input
+                            type="password"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-slate-900"
+                            value={editData.password || ""}
+                            onChange={(e) => setEditData({ ...editData, password: e.target.value })}
+                            placeholder="Password"
+                          />
+                          <select
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-slate-900 font-bold"
+                            value={editData.encryption || "WPA"}
+                            onChange={(e) => setEditData({ ...editData, encryption: e.target.value })}
+                          >
+                            <option value="WPA">WPA/WPA2</option>
+                            <option value="WEP">WEP</option>
+                            <option value="nopass">No Encryption</option>
+                          </select>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-400 italic">Editing for this type coming soon</p>
+                      )}
+                      
                       <div className="flex gap-2">
-                        <button onClick={() => handleUpdateUrl(qr.id)} className="flex-1 bg-primary text-white py-2 rounded-xl text-xs font-bold">Save</button>
-                        <button onClick={() => setEditingId(null)} className="flex-1 bg-slate-100 text-slate-500 py-2 rounded-xl text-xs font-bold">Cancel</button>
+                        <button onClick={() => handleUpdateUrl(qr.id)} className="flex-1 bg-indigo-600 text-white py-2 rounded-xl text-xs font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">Save Changes</button>
+                        <button onClick={() => setEditingId(null)} className="flex-1 bg-slate-100 text-slate-500 py-2 rounded-xl text-xs font-bold hover:bg-slate-200 transition-all">Cancel</button>
                       </div>
                     </div>
                   ) : (
-                    <a href={qr.destinationUrl} target="_blank" rel="noreferrer" className="text-indigo-600 hover:text-indigo-500 transition-colors text-sm font-bold break-all line-clamp-1">
-                      {qr.destinationUrl}
-                    </a>
+                    <div className="flex flex-col items-center">
+                      <a href={qr.destinationUrl} target="_blank" rel="noreferrer" className="text-indigo-600 hover:text-indigo-500 transition-colors text-sm font-bold break-all line-clamp-1 mb-1">
+                        {qr.type === 'WIFI' ? `WiFi: ${JSON.parse(qr.targetData || '{}').ssid || 'N/A'}` : qr.destinationUrl}
+                      </a>
+                    </div>
                   )}
                 </div>
 
@@ -579,10 +616,11 @@ export default function Home() {
                       onClick={() => {
                         setEditingId(qr.id);
                         setEditUrl(qr.destinationUrl);
+                        setEditData(qr.targetData ? JSON.parse(qr.targetData) : {});
                       }}
                       className="w-full py-3 rounded-2xl bg-slate-100 border border-slate-200 text-sm font-bold text-slate-700 hover:bg-slate-200 transition-all hover:scale-[1.02]"
                     >
-                      Update Destination
+                      Update Details
                     </button>
                   )}
                 </div>

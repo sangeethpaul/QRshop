@@ -15,16 +15,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let { destinationUrl } = await req.json();
-
-  if (!destinationUrl || typeof destinationUrl !== "string") {
-    return NextResponse.json({ error: "Invalid destination URL" }, { status: 400 });
-  }
-
-  destinationUrl = destinationUrl.replace(/\\/g, "/");
-  if (!/^https?:\/\//i.test(destinationUrl)) {
-    destinationUrl = `http://${destinationUrl}`;
-  }
+  const { destinationUrl, targetData } = await req.json();
 
   const qrcode = await prisma.qRCode.findUnique({ where: { id } });
 
@@ -38,14 +29,31 @@ export async function PATCH(
 
   if (!qrcode.isDynamic) {
     return NextResponse.json(
-      { error: "This QR code is not dynamic. You cannot edit the destination URL." },
+      { error: "This QR code is not dynamic. You cannot edit it." },
       { status: 403 }
     );
   }
 
+  const updatePayload: any = {};
+
+  if (qrcode.type === "URL") {
+    if (!destinationUrl || typeof destinationUrl !== "string") {
+      return NextResponse.json({ error: "Invalid destination URL" }, { status: 400 });
+    }
+    let sanitizedUrl = destinationUrl.replace(/\\/g, "/");
+    if (!/^https?:\/\//i.test(sanitizedUrl)) {
+      sanitizedUrl = `http://${sanitizedUrl}`;
+    }
+    updatePayload.destinationUrl = sanitizedUrl;
+  }
+
+  if (targetData) {
+    updatePayload.targetData = JSON.stringify(targetData);
+  }
+
   const updatedQrCode = await prisma.qRCode.update({
     where: { id },
-    data: { destinationUrl },
+    data: updatePayload,
   });
 
   return NextResponse.json(updatedQrCode);
