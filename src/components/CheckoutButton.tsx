@@ -14,7 +14,7 @@ const PLAN_CONFIG = {
   BUSINESS: { 
     label: "Business Plan", 
     INR: { price: 599, label: "₹599" },
-    USD: { price: 15, label: "$15" },
+    USD: { price: 10, label: "$10" },
     shortLabel: "Go Business", 
     description: "100 dynamic QRs, bulk creation, API access" 
   },

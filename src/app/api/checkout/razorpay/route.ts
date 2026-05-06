@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
   let amount = 0;
   if (currency === "USD") {
-    amount = plan === "PRO" ? 500 : 1500; // $5 or $15 in cents
+    amount = plan === "PRO" ? 500 : 1000; // $5 or $10 in cents
   } else {
     amount = plan === "PRO" ? 19900 : 59900; // ₹199 or ₹599 in paise
   }

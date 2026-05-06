@@ -29,7 +29,7 @@ export default function Home() {
   const landingPrices = {
     FREE: { INR: "0 INR", USD: "$0", sub: "Basic access" },
     PRO: { INR: "199 INR", USD: "$5", sub: "Per month" },
-    BUSINESS: { INR: "599 INR", USD: "$15", sub: "Per month" },
+    BUSINESS: { INR: "599 INR", USD: "$10", sub: "Per month" },
   };
 
   const QR_TYPES = [
