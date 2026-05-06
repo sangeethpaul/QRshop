@@ -4,25 +4,25 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 
 interface QRCodeDisplayProps {
-  url: string;
+  content: string;
   size?: number;
   isExpired?: boolean;
 }
 
-export default function QRCodeDisplay({ url, size = 200, isExpired = false }: QRCodeDisplayProps) {
+export default function QRCodeDisplay({ content, size = 200, isExpired = false }: QRCodeDisplayProps) {
   const [src, setSrc] = useState<string>("");
   const [highResSrc, setHighResSrc] = useState<string>("");
 
   useEffect(() => {
     // Generate display version
-    QRCode.toDataURL(url, { width: size, margin: 2 }, (err, url) => {
+    QRCode.toDataURL(content, { width: size, margin: 2 }, (err, url) => {
       if (!err) setSrc(url);
     });
     // Generate high-res version for A4 printing (approx 1500px)
-    QRCode.toDataURL(url, { width: 1500, margin: 4 }, (err, url) => {
+    QRCode.toDataURL(content, { width: 1500, margin: 4 }, (err, url) => {
       if (!err) setHighResSrc(url);
     });
-  }, [url, size]);
+  }, [content, size]);
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');

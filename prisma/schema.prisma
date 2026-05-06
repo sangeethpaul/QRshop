@@ -13,7 +13,9 @@ datasource db {
 
 model QRCode {
   id             String   @id @default(cuid())
+  type           String   @default("URL") // URL, WIFI, VCARD, TEXT, EMAIL, SMS
   destinationUrl String
+  targetData     String?  // JSON string for raw form data (SSID, etc.)
   userId         String
   userEmail      String?
   createdAt      DateTime @default(now())

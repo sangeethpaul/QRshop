@@ -9,12 +9,46 @@ export default function Home() {
   const { data: session, status } = useSession();
   const [qrCodes, setQrCodes] = useState<any[]>([]);
   const [subscription, setSubscription] = useState<any>({ plan: "FREE" });
-  const [urlInput, setUrlInput] = useState("");
+  const [selectedType, setSelectedType] = useState("URL");
+  const [selectedMode, setSelectedMode] = useState("DYNAMIC");
+  const [formData, setFormData] = useState<any>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editUrl, setEditUrl] = useState("");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  const QR_TYPES = [
+    { id: 'URL', label: 'URL', icon: '🌐' },
+    { id: 'WIFI', label: 'WiFi', icon: '📶' },
+    { id: 'VCARD', label: 'vCard', icon: '📇' },
+    { id: 'TEXT', label: 'Text', icon: '📝' },
+    { id: 'EMAIL', label: 'Email', icon: '📧' },
+    { id: 'SMS', label: 'SMS', icon: '💬' },
+  ];
+
+  const MODES = [
+    { id: 'FREE', label: 'Free (24h)', icon: '⏳', desc: 'Expires in 24h. Dynamic.' },
+    { id: 'STATIC', label: 'Static', icon: '🔒', desc: 'Permanent. Non-trackable.' },
+    { id: 'DYNAMIC', label: 'Dynamic', icon: '⚡', desc: 'Trackable. Editable anytime.' },
+  ];
+
+  const formatStaticContent = (type: string, data: any) => {
+    switch (type) {
+      case 'WIFI':
+        return `WIFI:S:${data.ssid};T:${data.encryption || 'WPA'};P:${data.password || ''};H:${data.hidden ? 'true' : 'false'};;`;
+      case 'VCARD':
+        return `BEGIN:VCARD\nVERSION:3.0\nFN:${data.name || ''}\nTEL:${data.phone || ''}\nEMAIL:${data.email || ''}\nEND:VCARD`;
+      case 'TEXT':
+        return data.text || '';
+      case 'EMAIL':
+        return `mailto:${data.to || ''}?subject=${encodeURIComponent(data.subject || '')}&body=${encodeURIComponent(data.body || '')}`;
+      case 'SMS':
+        return `smsto:${data.phone || ''}:${data.message || ''}`;
+      default:
+        return data.url || '';
+    }
+  };
 
   const isExpired = (createdAt: string, isLifetime: boolean) => {
     if (isLifetime) return false;
@@ -26,12 +60,12 @@ export default function Home() {
   };
 
   const limits: Record<string, number> = {
-    FREE: 3,
-    PRO: 25,
-    BUSINESS: 100,
+    FREE: 10,
+    PRO: 100,
+    BUSINESS: 500,
   };
 
-  const currentLimit = limits[subscription.plan] || 3;
+  const currentLimit = limits[subscription.plan] || 10;
   const expiredCount = qrCodes.filter(qr => isExpired(qr.createdAt, qr.isLifetime)).length;
   const hasReachedLimit = qrCodes.length >= currentLimit;
 
@@ -60,17 +94,33 @@ export default function Home() {
     setError("");
 
     try {
+      let payload: any = {
+        type: selectedType,
+        isDynamic: selectedMode !== "STATIC",
+        isLifetime: selectedMode === "DYNAMIC",
+        targetData: formData,
+      };
+
+      if (selectedType === "URL") {
+        payload.destinationUrl = formData.url;
+      } else if (selectedMode === "STATIC") {
+        payload.destinationUrl = formatStaticContent(selectedType, formData);
+      } else {
+        // Dynamic non-URL types will be handled by the redirect route showing a landing page
+        payload.destinationUrl = "#"; 
+      }
+
       const res = await fetch("/api/qrcodes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ destinationUrl: urlInput }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
 
       if (!res.ok) {
         setError(data.error || "Failed to generate");
       } else {
-        setUrlInput("");
+        setFormData({});
         fetchQRCodes();
       }
     } catch (err: any) {
@@ -216,35 +266,204 @@ export default function Home() {
           </button>
         </div>
 
-        <div className="glass p-8 rounded-3xl mb-12 relative overflow-hidden">
+        <div className="glass p-8 rounded-[2.5rem] mb-12 relative overflow-hidden">
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 blur-[80px]"></div>
-          <h2 className="text-2xl font-bold mb-6 text-slate-900">Generate QR Code</h2>
-          <form onSubmit={handleGenerate} className="flex flex-col md:flex-row gap-4 relative">
-            <div className="flex-1 relative group">
-              <input
-                type="text"
-                required
-                placeholder="Paste your URL here (e.g. google.com)"
-                value={urlInput}
-                onChange={(e) => setUrlInput(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 pl-12 text-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              />
-              <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.826L10.242 9.172a4 4 0 015.656 0l4 4a4 4 0 01-5.656 5.656l-1.102 1.101" />
-              </svg>
+          
+          <div className="flex flex-col gap-8">
+            {/* QR Type Tabs */}
+            <div className="flex flex-wrap gap-2">
+              {QR_TYPES.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => { setSelectedType(t.id); setFormData({}); }}
+                  className={`px-6 py-3 rounded-2xl font-bold transition-all flex items-center gap-2 ${
+                    selectedType === t.id 
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' 
+                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                  }`}
+                >
+                  <span className="text-lg">{t.icon}</span>
+                  {t.label}
+                </button>
+              ))}
             </div>
-            <button
-              type="submit"
-              disabled={loading || hasReachedLimit}
-              className="px-10 py-4 rounded-2xl font-bold btn-primary text-white disabled:opacity-50 text-lg"
-            >
-              {loading ? "Generating..." : hasReachedLimit ? "Limit Reached" : "Generate Dynamic"}
-            </button>
-          </form>
-          {error && <p className="text-rose-500 mt-4 font-medium flex items-center gap-2">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-            {error}
-          </p>}
+
+            <form onSubmit={handleGenerate} className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    {QR_TYPES.find(t => t.id === selectedType)?.icon}
+                    {QR_TYPES.find(t => t.id === selectedType)?.label} Details
+                  </h3>
+                  
+                  {selectedType === 'URL' && (
+                    <input
+                      type="url"
+                      required
+                      placeholder="https://example.com"
+                      value={formData.url || ""}
+                      onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-lg focus:ring-2 focus:ring-primary outline-none transition-all"
+                    />
+                  )}
+
+                  {selectedType === 'WIFI' && (
+                    <div className="space-y-3">
+                      <input
+                        placeholder="SSID (Network Name)"
+                        required
+                        value={formData.ssid || ""}
+                        onChange={(e) => setFormData({ ...formData, ssid: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 outline-none focus:ring-2 focus:ring-primary"
+                      />
+                      <input
+                        type="password"
+                        placeholder="Password"
+                        value={formData.password || ""}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 outline-none focus:ring-2 focus:ring-primary"
+                      />
+                      <select
+                        value={formData.encryption || "WPA"}
+                        onChange={(e) => setFormData({ ...formData, encryption: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 outline-none focus:ring-2 focus:ring-primary font-bold text-slate-600"
+                      >
+                        <option value="WPA">WPA/WPA2</option>
+                        <option value="WEP">WEP</option>
+                        <option value="nopass">No Encryption</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {selectedType === 'VCARD' && (
+                    <div className="space-y-3">
+                      <input
+                        placeholder="Full Name"
+                        required
+                        value={formData.name || ""}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 outline-none focus:ring-2 focus:ring-primary"
+                      />
+                      <input
+                        placeholder="Phone Number"
+                        required
+                        value={formData.phone || ""}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 outline-none focus:ring-2 focus:ring-primary"
+                      />
+                      <input
+                        type="email"
+                        placeholder="Email Address"
+                        required
+                        value={formData.email || ""}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                  )}
+
+                  {selectedType === 'TEXT' && (
+                    <textarea
+                      placeholder="Enter your plain text here..."
+                      required
+                      rows={4}
+                      value={formData.text || ""}
+                      onChange={(e) => setFormData({ ...formData, text: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  )}
+
+                  {selectedType === 'EMAIL' && (
+                    <div className="space-y-3">
+                      <input
+                        type="email"
+                        placeholder="Recipient Email"
+                        required
+                        value={formData.to || ""}
+                        onChange={(e) => setFormData({ ...formData, to: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 outline-none focus:ring-2 focus:ring-primary"
+                      />
+                      <input
+                        placeholder="Subject"
+                        value={formData.subject || ""}
+                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 outline-none focus:ring-2 focus:ring-primary"
+                      />
+                      <textarea
+                        placeholder="Email Body"
+                        rows={3}
+                        value={formData.body || ""}
+                        onChange={(e) => setFormData({ ...formData, body: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                  )}
+
+                  {selectedType === 'SMS' && (
+                    <div className="space-y-3">
+                      <input
+                        placeholder="Phone Number"
+                        required
+                        value={formData.phone || ""}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 outline-none focus:ring-2 focus:ring-primary"
+                      />
+                      <textarea
+                        placeholder="Message Content"
+                        required
+                        rows={3}
+                        value={formData.message || ""}
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    ⚙️ Generation Mode
+                  </h3>
+                  <div className="grid grid-cols-1 gap-3">
+                    {MODES.map(m => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => setSelectedMode(m.id)}
+                        className={`p-4 rounded-2xl border-2 text-left transition-all ${
+                          selectedMode === m.id
+                          ? 'border-indigo-600 bg-indigo-50/50'
+                          : 'border-slate-100 hover:border-slate-200 bg-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 mb-1">
+                          <span className="text-xl">{m.icon}</span>
+                          <span className={`font-black uppercase tracking-tight ${selectedMode === m.id ? 'text-indigo-600' : 'text-slate-900'}`}>
+                            {m.label}
+                          </span>
+                        </div>
+                        <p className="text-xs font-medium text-slate-500">{m.desc}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <button
+                  type="submit"
+                  disabled={loading || hasReachedLimit}
+                  className="w-full py-5 rounded-3xl font-black btn-primary text-white disabled:opacity-50 text-xl shadow-xl shadow-indigo-200 transition-all hover:scale-[1.01]"
+                >
+                  {loading ? "Creating..." : hasReachedLimit ? "Limit Reached" : `Generate ${selectedMode.charAt(0) + selectedMode.slice(1).toLowerCase()} QR`}
+                </button>
+                {error && <p className="text-rose-500 font-bold flex items-center justify-center gap-2 text-sm animate-bounce">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                  {error}
+                </p>}
+              </div>
+            </form>
+          </div>
         </div>
         
         {(expiredCount > 0 || hasReachedLimit) && (
@@ -298,7 +517,11 @@ export default function Home() {
                   </div>
                 )}
                 <div className={`mb-6 p-4 bg-white rounded-2xl shadow-xl ${expired ? 'shadow-slate-100' : 'shadow-indigo-100/50'}`}>
-                  <QRCodeDisplay url={redirectUrl} size={240} isExpired={expired} />
+                  <QRCodeDisplay 
+                    content={qr.isDynamic ? redirectUrl : qr.destinationUrl} 
+                    size={240} 
+                    isExpired={expired} 
+                  />
                 </div>
                 
                 <div className="mb-6 w-full px-2">
@@ -329,9 +552,9 @@ export default function Home() {
                     <span className="text-slate-900 text-base">{qr.clicks}</span>
                   </div>
                   <div className="flex flex-col items-end">
-                    <span className="text-[10px] uppercase text-slate-400 mb-1">Status</span>
+                    <span className="text-[10px] uppercase text-slate-400 mb-1">Type & Status</span>
                     <span className={expired ? "text-rose-500" : "text-emerald-600"}>
-                      {qr.isDynamic ? "Dynamic" : qr.isLifetime ? "Lifetime" : expired ? "Expired" : "Free (24h)"}
+                      {qr.type} • {qr.isDynamic ? "Dynamic" : "Static"}
                     </span>
                   </div>
                 </div>

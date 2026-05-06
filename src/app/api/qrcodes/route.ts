@@ -38,18 +38,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let { destinationUrl } = await req.json();
+  let { 
+    type = "URL", 
+    destinationUrl, 
+    targetData, 
+    isDynamic = true, 
+    isLifetime = false 
+  } = await req.json();
 
-  if (!destinationUrl || typeof destinationUrl !== "string") {
-    return NextResponse.json({ error: "Invalid destination URL" }, { status: 400 });
-  }
+  if (type === "URL" && destinationUrl) {
+    // Replace backslashes with forward slashes
+    destinationUrl = destinationUrl.replace(/\\/g, "/");
 
-  // Replace backslashes with forward slashes
-  destinationUrl = destinationUrl.replace(/\\/g, "/");
-
-  // Ensure URL has a protocol
-  if (!/^https?:\/\//i.test(destinationUrl)) {
-    destinationUrl = `http://${destinationUrl}`;
+    // Ensure URL has a protocol
+    if (!/^https?:\/\//i.test(destinationUrl)) {
+      destinationUrl = `http://${destinationUrl}`;
+    }
   }
 
   // Fetch user subscription
@@ -64,16 +68,16 @@ export async function POST(req: Request) {
     });
   }
 
-  // Enforce limits
+  // Enforce limits for non-static codes (static codes don't use server resources for redirect)
+  // Actually, we might still want to limit total codes per user.
   const limits: Record<string, number> = {
-    FREE: 3,
-    PRO: 25,
-    BUSINESS: 100,
+    FREE: 10, // Increased limits for new multi-type model
+    PRO: 100,
+    BUSINESS: 500,
   };
 
-  const currentLimit = limits[subscription.plan] || 3;
+  const currentLimit = limits[subscription.plan] || 10;
   
-  // Count current QR codes (only those created under this plan model)
   const qrCodeCount = await prisma.qRCode.count({
     where: { userId },
   });
@@ -87,10 +91,13 @@ export async function POST(req: Request) {
 
   const qrcode = await prisma.qRCode.create({
     data: {
-      destinationUrl,
+      type,
+      destinationUrl: destinationUrl || "",
+      targetData: targetData ? JSON.stringify(targetData) : null,
       userId,
       userEmail: session?.user?.email || "",
-      isDynamic: true, // All new codes are dynamic under the new model
+      isDynamic,
+      isLifetime,
     },
   });
 
