@@ -1,27 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Script from "next/script";
 
-interface CheckoutButtonProps {
-  qrCodeId: string;
-  tier: "BASIC" | "DYNAMIC";
-  onSuccess: () => void;
-  userEmail?: string;
-  userName?: string;
-  variant?: "full" | "compact";
-}
-
 const PLAN_CONFIG = {
-  PRO: { label: "Pro Plan", price: "₹199", shortLabel: "Go Pro", description: "25 dynamic QRs, custom domain, no expiry" },
-  BUSINESS: { label: "Business Plan", price: "₹599", shortLabel: "Go Business", description: "100 dynamic QRs, bulk creation, API access" },
+  PRO: { 
+    label: "Pro Plan", 
+    INR: { price: 199, label: "₹199" },
+    USD: { price: 5, label: "$5" },
+    shortLabel: "Go Pro", 
+    description: "25 dynamic QRs, custom domain, no expiry" 
+  },
+  BUSINESS: { 
+    label: "Business Plan", 
+    INR: { price: 599, label: "₹599" },
+    USD: { price: 15, label: "$15" },
+    shortLabel: "Go Business", 
+    description: "100 dynamic QRs, bulk creation, API access" 
+  },
 };
 
 export default function CheckoutButton({ plan, onSuccess, userEmail = "", userName = "", variant = "full" }: { plan: "PRO" | "BUSINESS", onSuccess: () => void, userEmail?: string, userName?: string, variant?: "full" | "compact" }) {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [currency, setCurrency] = useState<"INR" | "USD">("INR");
+
+  useEffect(() => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz !== "Asia/Calcutta" && tz !== "Asia/Kolkata") {
+      setCurrency("USD");
+    }
+  }, []);
 
   const config = PLAN_CONFIG[plan];
+  const currentPrice = config[currency];
 
   const handlePayment = async () => {
     setLoading(true);
@@ -30,7 +42,7 @@ export default function CheckoutButton({ plan, onSuccess, userEmail = "", userNa
       const res = await fetch("/api/checkout/razorpay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, currency }),
       });
 
       const orderData = await res.json();
@@ -45,7 +57,7 @@ export default function CheckoutButton({ plan, onSuccess, userEmail = "", userNa
         amount: orderData.amount,
         currency: orderData.currency,
         name: "QRdoer",
-        description: `${config.label} — ${config.price}/mo`,
+        description: `${config.label} — ${currentPrice.label}/mo`,
         order_id: orderData.id,
         handler: async function (response: any) {
           // Step 3: Verify payment on the server and upgrade subscription
@@ -117,8 +129,8 @@ export default function CheckoutButton({ plan, onSuccess, userEmail = "", userNa
       >
         {isCompact ? config.shortLabel : (
           plan === "BUSINESS" 
-            ? `Upgrade to ${config.label} at ${config.price}/mo` 
-            : `Upgrade to ${config.label} at ${config.price}/mo`
+            ? `Upgrade to ${config.label} at ${currentPrice.label}/mo` 
+            : `Upgrade to ${config.label} at ${currentPrice.label}/mo`
         )}
       </button>
 
@@ -132,7 +144,7 @@ export default function CheckoutButton({ plan, onSuccess, userEmail = "", userNa
             <p className="text-slate-500 text-sm mb-8 leading-relaxed">{config.description}</p>
 
             <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 mb-8">
-              <p className="text-4xl font-black text-slate-900">{config.price}</p>
+              <p className="text-4xl font-black text-slate-900">{currentPrice.label}</p>
               <p className="text-slate-400 text-xs mt-2 uppercase tracking-widest font-bold">One-time payment · Lifetime access</p>
             </div>
 

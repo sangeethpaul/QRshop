@@ -17,25 +17,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { plan } = await req.json();
+  const { plan, currency = "INR" } = await req.json();
 
   if (!plan || !["PRO", "BUSINESS"].includes(plan)) {
     return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
   }
 
-
-
   let amount = 0;
-  if (plan === "PRO") {
-    amount = 19900; // 199 INR
-  } else if (plan === "BUSINESS") {
-    amount = 59900; // 599 INR
+  if (currency === "USD") {
+    amount = plan === "PRO" ? 500 : 1500; // $5 or $15 in cents
+  } else {
+    amount = plan === "PRO" ? 19900 : 59900; // ₹199 or ₹599 in paise
   }
 
   try {
     const order = await razorpay.orders.create({
       amount,
-      currency: "INR",
+      currency,
       receipt: `receipt_${userId}_${Date.now()}`,
     });
 

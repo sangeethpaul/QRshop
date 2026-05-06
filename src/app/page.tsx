@@ -17,6 +17,20 @@ export default function Home() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editUrl, setEditUrl] = useState("");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [currency, setCurrency] = useState<"INR" | "USD">("INR");
+
+  useEffect(() => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz !== "Asia/Calcutta" && tz !== "Asia/Kolkata") {
+      setCurrency("USD");
+    }
+  }, []);
+
+  const landingPrices = {
+    FREE: { INR: "0 INR", USD: "$0", sub: "Basic access" },
+    PRO: { INR: "199 INR", USD: "$5", sub: "Per month" },
+    BUSINESS: { INR: "599 INR", USD: "$15", sub: "Per month" },
+  };
 
   const QR_TYPES = [
     { id: 'URL', label: 'URL', icon: '🌐' },
@@ -173,22 +187,22 @@ export default function Home() {
           {[
             { 
               name: "Free", 
-              price: "0 INR", 
-              sub: "Basic access",
+              price: landingPrices.FREE[currency], 
+              sub: landingPrices.FREE.sub,
               features: ["3 Dynamic QR Codes", "24h Expiration", "Basic Tracking"],
               highlight: false 
             },
             { 
               name: "Pro", 
-              price: "199 INR", 
-              sub: "Per month",
+              price: landingPrices.PRO[currency], 
+              sub: landingPrices.PRO.sub,
               features: ["25 Dynamic QR Codes", "No Expiration", "Edit Anytime", "Custom Short Domain"],
               highlight: true 
             },
             { 
               name: "Business", 
-              price: "599 INR", 
-              sub: "Per month",
+              price: landingPrices.BUSINESS[currency], 
+              sub: landingPrices.BUSINESS.sub,
               features: ["100 Dynamic QR Codes", "Bulk Creation", "API Access", "Team Members"],
               highlight: false 
             }
@@ -616,14 +630,14 @@ export default function Home() {
                   {
                     id: "PRO",
                     name: "Pro Plan",
-                    price: "199 INR",
+                    price: landingPrices.PRO[currency],
                     features: ["25 Dynamic QR Codes", "No Expiration", "Custom Short Domain", "Basic Analytics"],
                     highlight: true
                   },
                   {
                     id: "BUSINESS",
                     name: "Business Plan",
-                    price: "599 INR",
+                    price: landingPrices.BUSINESS[currency],
                     features: ["100 Dynamic QR Codes", "API Access", "Bulk Creation", "Team Members", "Premium Reports"],
                     highlight: false
                   }
@@ -632,7 +646,7 @@ export default function Home() {
                     <h4 className="text-xl font-black text-slate-900 mb-2">{plan.name}</h4>
                     <div className="flex items-baseline gap-1 mb-6">
                       <span className="text-3xl font-black text-slate-900">{plan.price}</span>
-                      <span className="text-slate-500 text-sm font-bold">/mo</span>
+                      <span className="text-slate-500 text-sm font-bold">{plan.id === 'FREE' ? '' : '/mo'}</span>
                     </div>
                     <ul className="space-y-4 mb-8">
                       {plan.features.map(f => (
