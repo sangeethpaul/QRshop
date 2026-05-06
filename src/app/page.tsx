@@ -60,12 +60,12 @@ export default function Home() {
   };
 
   const limits: Record<string, number> = {
-    FREE: 10,
-    PRO: 100,
-    BUSINESS: 500,
+    FREE: 3,
+    PRO: 25,
+    BUSINESS: 100,
   };
 
-  const currentLimit = limits[subscription.plan] || 10;
+  const currentLimit = limits[subscription.plan] || 3;
   const expiredCount = qrCodes.filter(qr => isExpired(qr.createdAt, qr.isLifetime)).length;
   const hasReachedLimit = qrCodes.length >= currentLimit;
 

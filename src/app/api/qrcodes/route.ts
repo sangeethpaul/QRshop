@@ -71,12 +71,12 @@ export async function POST(req: Request) {
   // Enforce limits for non-static codes (static codes don't use server resources for redirect)
   // Actually, we might still want to limit total codes per user.
   const limits: Record<string, number> = {
-    FREE: 10, // Increased limits for new multi-type model
-    PRO: 100,
-    BUSINESS: 500,
+    FREE: 3,
+    PRO: 25,
+    BUSINESS: 100,
   };
 
-  const currentLimit = limits[subscription.plan] || 10;
+  const currentLimit = limits[subscription.plan] || 3;
   
   const qrCodeCount = await prisma.qRCode.count({
     where: { userId },
