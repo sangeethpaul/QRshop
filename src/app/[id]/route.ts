@@ -76,7 +76,10 @@ export async function GET(
 
     switch (qrcode.type) {
       case "WIFI":
-        const wifiUri = `WIFI:S:${data.ssid};T:${data.encryption || 'WPA'};P:${data.password || ''};H:${data.hidden ? 'true' : 'false'};;`;
+        const encryption = data.encryption === 'nopass' ? '' : `T:${data.encryption || 'WPA'};`;
+        const password = data.encryption === 'nopass' ? '' : `P:${data.password || ''};`;
+        const hidden = data.hidden ? 'H:true;' : '';
+        const wifiUri = `WIFI:${encryption}S:${data.ssid};${password}${hidden};`;
         contentHtml = `
           <div class="info-card">
             <div class="icon">📶</div>
@@ -98,14 +101,25 @@ export async function GET(
             </div>
             <a href="${wifiUri}" class="primary-btn connect-btn">Connect to WiFi</a>
             <p class="hint">Click above to join network automatically</p>
+            <div id="ios-note" class="ios-note" style="display: none;">
+              <p>Note: iOS Safari does not support automatic joining. Please use the "Copy" button for the password above.</p>
+            </div>
           </div>
           <script>
-            // Auto-trigger WiFi connection prompt on load
-            window.onload = () => {
-              setTimeout(() => {
-                window.location.href = "${wifiUri}";
-              }, 1000);
-            };
+            // Check if iOS
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            if (isIOS) {
+              document.getElementById('ios-note').style.display = 'block';
+              document.querySelector('.connect-btn').style.display = 'none';
+              document.querySelector('.hint').style.display = 'none';
+            } else {
+              // Auto-trigger WiFi connection prompt on load for non-iOS
+              window.onload = () => {
+                setTimeout(() => {
+                  window.location.href = "${wifiUri}";
+                }, 1000);
+              };
+            }
           </script>
         `;
         break;
@@ -202,6 +216,7 @@ export async function GET(
             button:hover, .primary-btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
             .text-content { background: #f1f5f9; padding: 1.5rem; border-radius: 1rem; text-align: left; line-height: 1.5; margin-bottom: 1rem; }
             .hint { font-size: 0.75rem; color: #94a3b8; margin-top: 0.75rem; font-weight: 500; }
+            .ios-note { margin-top: 1.5rem; padding: 1rem; background: #fff7ed; border-radius: 0.75rem; border: 1px solid #fed7aa; color: #9a3412; font-size: 0.875rem; font-weight: 500; line-height: 1.4; }
             .footer { text-align: center; margin-top: 2rem; color: #94a3b8; font-size: 0.875rem; }
             .footer a { color: var(--primary); text-decoration: none; font-weight: 700; }
           </style>

@@ -51,7 +51,10 @@ export default function Home() {
   const formatStaticContent = (type: string, data: any) => {
     switch (type) {
       case 'WIFI':
-        return `WIFI:S:${data.ssid};T:${data.encryption || 'WPA'};P:${data.password || ''};H:${data.hidden ? 'true' : 'false'};;`;
+        const encryption = data.encryption === 'nopass' ? '' : `T:${data.encryption || 'WPA'};`;
+        const password = data.encryption === 'nopass' ? '' : `P:${data.password || ''};`;
+        const hidden = data.hidden ? 'H:true;' : '';
+        return `WIFI:${encryption}S:${data.ssid};${password}${hidden};`;
       case 'VCARD':
         return `BEGIN:VCARD\nVERSION:3.0\nFN:${data.name || ''}\nTEL:${data.phone || ''}\nEMAIL:${data.email || ''}\nEND:VCARD`;
       case 'TEXT':
