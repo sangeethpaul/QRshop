@@ -51,14 +51,20 @@ export default function CheckoutButton({ plan, onSuccess, userEmail = "", userNa
         throw new Error(orderData.error || "Failed to create order");
       }
 
+      const isSubscription = orderData.isSubscription;
+
       // Step 2: Open Razorpay checkout
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: orderData.amount,
-        currency: orderData.currency,
         name: "QRdoer",
         description: `${config.label} — ${currentPrice.label}/mo`,
-        order_id: orderData.id,
+        order_id: isSubscription ? undefined : orderData.id,
+        subscription_id: isSubscription ? orderData.id : undefined,
+        // Only include amount/currency for one-time orders
+        ...(isSubscription ? {} : { 
+          amount: orderData.amount, 
+          currency: orderData.currency 
+        }),
         handler: async function (response: any) {
           // Step 3: Verify payment on the server and upgrade subscription
           const verifyRes = await fetch("/api/checkout/verify", {
@@ -66,6 +72,7 @@ export default function CheckoutButton({ plan, onSuccess, userEmail = "", userNa
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               razorpay_order_id: response.razorpay_order_id,
+              razorpay_subscription_id: response.razorpay_subscription_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
               plan,
@@ -145,7 +152,9 @@ export default function CheckoutButton({ plan, onSuccess, userEmail = "", userNa
 
             <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 mb-8">
               <p className="text-4xl font-black text-slate-900">{currentPrice.label}</p>
-              <p className="text-slate-400 text-xs mt-2 uppercase tracking-widest font-bold">One-time payment · Lifetime access</p>
+              <p className="text-slate-400 text-xs mt-2 uppercase tracking-widest font-bold">
+                {currency === 'INR' ? 'Billed Monthly · Cancel Anytime' : 'One-time payment · Lifetime access'}
+              </p>
             </div>
 
             <div className="flex flex-col gap-3">

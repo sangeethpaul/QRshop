@@ -26,10 +26,11 @@ model QRCode {
 }
 
 model Subscription {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  plan      String   @default("FREE") // FREE, PRO, BUSINESS
-  expiresAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  plan                   String   @default("FREE") // FREE, PRO, BUSINESS
+  razorpaySubscriptionId String?  @unique
+  expiresAt              DateTime?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 }
