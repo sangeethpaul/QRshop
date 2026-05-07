@@ -7,7 +7,8 @@ export async function GET() {
   const session = await getServerSession(authOptions);
   
   if (!session || (session.user as any)?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    console.log("Admin Access Denied:", session?.user?.email, "Role:", (session?.user as any)?.role);
+    return NextResponse.json({ error: "Unauthorized: Admin role required. Try signing out and back in." }, { status: 403 });
   }
 
   // Get daily QR codes by type
