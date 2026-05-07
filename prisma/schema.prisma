@@ -47,7 +47,12 @@ model User {
   role          String    @default("USER") // USER, ADMIN
   accounts      Account[]
   sessions      Session[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
 }
+
+
+
 
 model VerificationToken {
   identifier String
