@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",
+    "@paypal/react-paypal-js": "^9.2.0",
     "@prisma/client": "^5.22.0",
     "@types/qrcode": "^1.5.6",
     "next": "16.2.4",

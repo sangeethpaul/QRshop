@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Script from "next/script";
+import { PayPalButtons } from "@paypal/react-paypal-js";
 
 const PLAN_CONFIG = {
   PRO: { 
@@ -158,13 +159,60 @@ export default function CheckoutButton({ plan, onSuccess, userEmail = "", userNa
             </div>
 
             <div className="flex flex-col gap-3">
-              <button
-                onClick={handlePayment}
-                disabled={loading}
-                className="w-full py-4 rounded-2xl font-bold btn-primary text-white disabled:opacity-50 transition-all"
-              >
-                {loading ? "Processing..." : `Complete Purchase`}
-              </button>
+              {currency === "USD" ? (
+                <div className="min-h-[150px]">
+                  <PayPalButtons
+                    style={{ layout: "vertical", shape: "rect", label: "pay" }}
+                    createOrder={(data, actions) => {
+                      return actions.order.create({
+                        intent: "CAPTURE",
+                        purchase_units: [
+                          {
+                            amount: {
+                              currency_code: "USD",
+                              value: (currentPrice.price).toString(),
+                            },
+                            description: `${config.label} Subscription`,
+                          },
+                        ],
+                      });
+                    }}
+                    onApprove={async (data, actions) => {
+                      if (actions.order) {
+                        const details = await actions.order.capture();
+                        // Step 3: Verify PayPal payment and upgrade
+                        const verifyRes = await fetch("/api/checkout/paypal/capture", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            orderID: data.orderID,
+                            plan,
+                          }),
+                        });
+
+                        if (verifyRes.ok) {
+                          setShowModal(false);
+                          onSuccess();
+                        } else {
+                          alert("Payment verified, but account upgrade failed. Please contact support.");
+                        }
+                      }
+                    }}
+                    onError={(err) => {
+                      console.error("PayPal Error:", err);
+                      alert("PayPal payment failed. Please try again.");
+                    }}
+                  />
+                </div>
+              ) : (
+                <button
+                  onClick={handlePayment}
+                  disabled={loading}
+                  className="w-full py-4 rounded-2xl font-bold btn-primary text-white disabled:opacity-50 transition-all"
+                >
+                  {loading ? "Processing..." : `Complete Purchase`}
+                </button>
+              )}
               <button
                 onClick={() => { setShowModal(false); setLoading(false); }}
                 className="w-full py-3 rounded-2xl text-slate-400 font-bold hover:text-slate-600 transition-colors"
