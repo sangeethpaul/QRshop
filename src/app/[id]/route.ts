@@ -212,10 +212,19 @@ export async function GET(
         </body>
       </html>`,
       {
-        headers: { "Content-Type": "text/html" },
+        headers: { 
+          "Content-Type": "text/html",
+          "X-Robots-Tag": "noindex"
+        },
       }
+
     );
   }
 
-  return NextResponse.redirect(qrcode.destinationUrl);
+  return NextResponse.redirect(qrcode.destinationUrl, {
+    headers: {
+      'X-Robots-Tag': 'noindex'
+    }
+  });
+
 }
