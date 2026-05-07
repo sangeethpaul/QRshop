@@ -105,7 +105,7 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-8 mb-12">
           {/* Daily QR Code Trends */}
           <div className="glass p-8 rounded-[2.5rem] bg-white shadow-sm overflow-hidden">
             <h2 className="text-xl font-black mb-8 flex items-center gap-3">
@@ -200,6 +200,58 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
+
+        {/* User Management Table */}
+        <div className="glass p-8 rounded-[2.5rem] bg-white shadow-sm">
+          <h2 className="text-xl font-black mb-8 flex items-center gap-3">
+            👥 User Management
+            <span className="text-xs font-bold px-3 py-1 bg-slate-100 rounded-full text-slate-500">{stats.users.length} Users</span>
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-slate-100">
+                  <th className="pb-4 text-xs font-black text-slate-400 uppercase tracking-widest">User</th>
+                  <th className="pb-4 text-xs font-black text-slate-400 uppercase tracking-widest">Email</th>
+                  <th className="pb-4 text-xs font-black text-slate-400 uppercase tracking-widest">Plan</th>
+                  <th className="pb-4 text-xs font-black text-slate-400 uppercase tracking-widest">Joined</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {stats.users.map((user: any) => (
+                  <tr key={user.id} className="group hover:bg-slate-50/50 transition-colors">
+                    <td className="py-4">
+                      <div className="flex items-center gap-3">
+                        {user.image ? (
+                          <img src={user.image} alt="" className="w-8 h-8 rounded-full border border-slate-200" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 uppercase">
+                            {(user.name || user.email || "?").charAt(0)}
+                          </div>
+                        )}
+                        <span className="font-bold text-slate-900">{user.name || "Anonymous"}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 text-sm font-medium text-slate-500">{user.email}</td>
+                    <td className="py-4">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${
+                        user.plan === 'BUSINESS' ? 'bg-purple-100 text-purple-600' :
+                        user.plan === 'PRO' ? 'bg-indigo-100 text-indigo-600' :
+                        'bg-slate-100 text-slate-400'
+                      }`}>
+                        {user.plan}
+                      </span>
+                    </td>
+                    <td className="py-4 text-sm font-bold text-slate-400">
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </div>
   );

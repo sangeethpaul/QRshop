@@ -38,19 +38,44 @@ export async function GET() {
     // Get total stats
     const totalUsers = await prisma.user.count();
     const totalQRCodes = await prisma.qRCode.count();
-    const totalSubscriptions = await prisma.subscription.count({
+    const totalSubscriptionsCount = await prisma.subscription.count({
       where: { plan: { not: "FREE" } }
+    });
+
+    // Get detailed user list
+    const allUsers = await prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        image: true,
+        createdAt: true,
+      }
+    });
+
+    const allSubscriptions = await prisma.subscription.findMany();
+    
+    const userList = allUsers.map(user => {
+      const sub = allSubscriptions.find(s => s.userId === user.id);
+      return {
+        ...user,
+        plan: sub?.plan || "FREE",
+        expiresAt: sub?.expiresAt
+      };
     });
 
     return NextResponse.json({
       qrStats,
       userStats,
+      users: userList,
       totals: {
         users: totalUsers,
         qrcodes: totalQRCodes,
-        premiumSubscriptions: totalSubscriptions
+        premiumSubscriptions: totalSubscriptionsCount
       }
     });
+
   } catch (error: any) {
     console.error("Admin Stats API Error:", error);
     return NextResponse.json({ 
