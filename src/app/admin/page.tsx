@@ -21,12 +21,22 @@ export default function AdminDashboard() {
     const fetchStats = async () => {
       try {
         const res = await fetch("/api/admin/stats");
+        const contentType = res.headers.get("content-type");
+        
         if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || "Failed to fetch stats");
+          if (contentType && contentType.includes("application/json")) {
+            const data = await res.json();
+            throw new Error(data.error || `Error ${res.status}`);
+          }
+          throw new Error(`HTTP Error ${res.status}: ${res.statusText}`);
         }
-        const data = await res.json();
-        setStats(data);
+
+        if (contentType && contentType.includes("application/json")) {
+          const data = await res.json();
+          setStats(data);
+        } else {
+          throw new Error("Invalid response from server (expected JSON)");
+        }
       } catch (err: any) {
         setError(err.message);
       } finally {
