@@ -46,12 +46,9 @@ export const authOptions: NextAuthOptions = {
             });
             await prisma.subscription.updateMany({
               where: { userId: { contains: ":" }, NOT: { userId: user.id } }, // Old IDs contain ":"
-              // Note: This is a bit risky if multiple users share an ID format, 
-              // but we can refine it by checking userEmail if we had it in Subscription
-              // Since Subscription doesn't have email, we'll just try to match based on the fact 
-              // that this user just logged in and we want to consolidate their data.
-              // Actually, better to just leave Subscription as is or only update if it's uniquely identifiable.
+              data: { userId: user.id }
             });
+
           } catch (e) {
             console.error("Migration error:", e);
           }
