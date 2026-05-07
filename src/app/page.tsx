@@ -43,10 +43,10 @@ export default function Home() {
   ];
 
   const MODES = [
-    { id: 'FREE', label: 'Free (24h)', icon: '⏳', desc: 'Expires in 24h. Dynamic.' },
     { id: 'STATIC', label: 'Static', icon: '🔒', desc: 'Permanent. Non-trackable.' },
     { id: 'DYNAMIC', label: 'Dynamic', icon: '⚡', desc: 'Trackable. Editable anytime.' },
   ];
+
 
   const formatStaticContent = (type: string, data: any) => {
     switch (type) {
@@ -69,13 +69,9 @@ export default function Home() {
   };
 
   const isExpired = (createdAt: string, isLifetime: boolean) => {
-    if (isLifetime) return false;
-    if (subscription.plan === "PRO" || subscription.plan === "BUSINESS") return false;
-    const ONE_DAY = 24 * 60 * 60 * 1000;
-    const now = new Date().getTime();
-    const created = new Date(createdAt).getTime();
-    return now - created > ONE_DAY;
+    return false;
   };
+
 
   const limits: Record<string, number> = {
     FREE: 3,
@@ -84,7 +80,8 @@ export default function Home() {
   };
 
   const currentLimit = limits[subscription.plan] || 3;
-  const expiredCount = qrCodes.filter(qr => isExpired(qr.createdAt, qr.isLifetime)).length;
+  const expiredCount = 0;
+
   const hasReachedLimit = qrCodes.length >= currentLimit;
 
   const fetchQRCodes = async () => {
@@ -487,22 +484,20 @@ export default function Home() {
           </div>
         </div>
         
-        {(expiredCount > 0 || hasReachedLimit) && (
+        {hasReachedLimit && (
           <div className="mb-8 p-6 rounded-3xl bg-indigo-600 text-white shadow-xl shadow-indigo-200 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
             <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl backdrop-blur-sm">
-                  {expiredCount > 0 ? "⚠️" : "🚀"}
+                  🚀
                 </div>
                 <div>
                   <h3 className="text-lg font-bold">
-                    {expiredCount > 0 
-                      ? `${expiredCount} QR Code${expiredCount > 1 ? 's have' : ' has'} expired` 
-                      : "You've reached your plan limit"}
+                    You've reached your plan limit
                   </h3>
                   <p className="text-indigo-100 text-sm font-medium">
-                    Upgrade to a premium plan to unlock more slots and remove expiration.
+                    Upgrade to a premium plan to unlock more slots.
                   </p>
                 </div>
               </div>
@@ -515,6 +510,7 @@ export default function Home() {
             </div>
           </div>
         )}
+
 
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
@@ -529,14 +525,8 @@ export default function Home() {
             const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}/${qr.id}` : '';
 
             return (
-              <div key={qr.id} id={`qr-${qr.id}`} className={`glass p-6 rounded-3xl flex flex-col items-center text-center group hover:border-primary/50 transition-all duration-300 bg-white relative ${expired ? 'opacity-75 grayscale-[0.5]' : ''}`}>
-                {expired && (
-                  <div className="absolute top-4 right-4 z-20">
-                    <span className="bg-rose-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-lg shadow-rose-200">
-                      Expired
-                    </span>
-                  </div>
-                )}
+              <div key={qr.id} id={`qr-${qr.id}`} className={`glass p-6 rounded-3xl flex flex-col items-center text-center group hover:border-primary/50 transition-all duration-300 bg-white relative`}>
+
                 <div className={`mb-6 p-4 bg-white rounded-2xl shadow-xl ${expired ? 'shadow-slate-100' : 'shadow-indigo-100/50'}`}>
                   <QRCodeDisplay 
                     content={qr.isDynamic ? redirectUrl : qr.destinationUrl} 
